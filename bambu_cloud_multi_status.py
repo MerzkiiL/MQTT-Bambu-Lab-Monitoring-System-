@@ -1,8 +1,4 @@
-"""Monitor all accessible Bambu Cloud printers and print compact status updates.
-
-Experimental proof of concept using community-documented Bambu Cloud behavior.
-This is read-only: it does not send print-control commands.
-"""
+"""Monitor all accessible Bambu Cloud printers and print compact status updates"""
 
 from __future__ import annotations
 
@@ -71,7 +67,7 @@ PUSHALL_PAYLOAD = {
 
 
 class ConfigError(ValueError):
-    """Raised when required local configuration is missing or invalid."""
+    """Raised when required local configuration is missing"""
 
 
 @dataclass(frozen=True)
@@ -100,16 +96,16 @@ class PrinterStatus:
     task_id: Any = None
 
     def signature(self) -> tuple[Any, ...]:
-        """Only these fields decide whether a new output block is printed."""
+        """Only these fields decide whether a new output block is printed"""
         return tuple(getattr(self, field_name) for field_name in WATCHED_FIELDS)
 
     def has_any_watched_value(self) -> bool:
-        """Ignore MQTT reports that do not contain any field we care about."""
+        """Ignore MQTT reports that do not contain any field we care about"""
         return any(getattr(self, field_name) not in (None, "") for field_name in WATCHED_FIELDS)
 
 
 def load_config() -> Config:
-    """Load secrets/config from .env located beside this script."""
+    """Load secrets/config from .env located beside this script"""
     env_path = Path(__file__).with_name(".env")
     if env_path.exists():
         load_dotenv(env_path)
@@ -172,7 +168,7 @@ def first_present(data: dict[str, Any], *keys: str) -> Any:
 
 
 def walk_objects(value: Any) -> list[dict[str, Any]]:
-    """Return every dictionary found inside an arbitrary JSON response."""
+    """Return every dictionary found inside an arbitrary JSON respon"""
     objects: list[dict[str, Any]] = []
     if isinstance(value, dict):
         objects.append(value)
@@ -185,7 +181,7 @@ def walk_objects(value: Any) -> list[dict[str, Any]]:
 
 
 def extract_device_id(device: dict[str, Any]) -> str | None:
-    """Use an identifier returned by the cloud API; never invent one."""
+    """Use an identifier returned by the cloud API"""
     value = first_present(device, *DEVICE_ID_KEYS)
     if value is None:
         return None
@@ -193,7 +189,7 @@ def extract_device_id(device: dict[str, Any]) -> str | None:
 
 
 def extract_devices_from_response(body: Any) -> list[dict[str, Any]]:
-    """Find likely printer/device objects in a cloud response."""
+    """Find likely printer/device objects in a cloud respon"""
     devices: list[dict[str, Any]] = []
     seen_ids: set[str] = set()
 
@@ -211,7 +207,7 @@ def get_cloud_json(
     url: str,
     headers: dict[str, str],
 ) -> tuple[int | None, Any | None, str | None]:
-    """GET JSON from Bambu Cloud using requests if available, else built-in urllib."""
+    """GET JSON from Bambu Cloud using requests if available"""
     if requests is not None:
         try:
             response = requests.get(url, headers=headers, timeout=REQUEST_TIMEOUT_SECONDS)
@@ -243,7 +239,7 @@ def get_cloud_json(
 
 
 def load_cloud_devices(config: Config) -> list[PrinterDevice]:
-    """Query Bambu Cloud for devices linked to the current account."""
+    """Query Bambu Cloud for devices linked to the account"""
     headers = {
         "Authorization": f"Bearer {config.access_token}",
         "Accept": "application/json",
@@ -309,7 +305,7 @@ def load_cloud_devices(config: Config) -> list[PrinterDevice]:
 
 
 def extract_status(data: Any) -> PrinterStatus:
-    """Extract only the fields that should trigger output updates."""
+    """Extract only the fields that should trigger output updates"""
     if not isinstance(data, dict):
         return PrinterStatus()
 
@@ -328,14 +324,14 @@ def extract_status(data: Any) -> PrinterStatus:
 
 
 def keep_existing_if_missing(previous: Any, current: Any) -> Any:
-    """Keep the previous useful value when a new MQTT report omits a field."""
+    """Keep the previous value when a new MQTT report omits a field"""
     if current in (None, ""):
         return previous
     return current
 
 
 def merge_status(previous: PrinterStatus | None, current: PrinterStatus) -> PrinterStatus:
-    """Merge partial MQTT updates without replacing known values with missing ones."""
+    """Merge partial MQTT updates without replacing known values with missing ones"""
     if previous is None:
         return current
 
@@ -352,7 +348,7 @@ def merge_status(previous: PrinterStatus | None, current: PrinterStatus) -> Prin
 
 
 class MultiPrinterMonitor:
-    """One MQTT client subscribed to all discovered printer report topics."""
+    """One MQTT client subscribed to all discovered printer report topics"""
 
     def __init__(
         self,
@@ -402,7 +398,7 @@ class MultiPrinterMonitor:
             self.client.on_log = self.on_log
 
     def _load_persisted_state(self) -> None:
-        """Warm the in-memory cache from the local JSON store."""
+        """Warm the cache from the local JSON store"""
         for printer in self.printers:
             record = printer_state_store.ensure_printer(
                 printer.device_id,
@@ -613,7 +609,7 @@ class MultiPrinterMonitor:
             )
 
     def _print(self, message: str) -> None:
-        """Print only in CLI mode, and never crash on Windows console encoding."""
+        """Print only in CLI mode"""
         if not self.console_output:
             return
         stream = sys.stdout
@@ -629,7 +625,7 @@ class MultiPrinterMonitor:
             stream.flush()
 
     def _format_snapshot_locked(self) -> str:
-        """Format all printers as one compact block. Call while holding _lock."""
+        """Format all printers as one compact block. Call while holding _lock"""
         lines: list[str] = ["", "Printer status update:"]
         for printer in self.printers:
             status = self._latest_status.get(printer.device_id)
