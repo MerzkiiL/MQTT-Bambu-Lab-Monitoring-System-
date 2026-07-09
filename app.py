@@ -1,4 +1,4 @@
-"""Local desktop dashboard for Bambu Cloud printer statuses."""
+"""Local dashboard for Bambu Cloud printer statuses"""
 
 from __future__ import annotations
 
