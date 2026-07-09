@@ -1,4 +1,4 @@
-"""Launch the Bambu dashboard without opening a console window."""
+"""Launch the Bambu dashboard without opening a console window"""
 
 from __future__ import annotations
 
@@ -14,7 +14,7 @@ VENV_PYTHON = PROJECT_DIR / ".venv" / "Scripts" / "python.exe"
 
 
 def pick_python() -> Path:
-    """Prefer the project virtual environment so installed packages are found."""
+    """Prefer the project virtual environment so installed packages are found"""
     if VENV_PYTHONW.exists():
         return VENV_PYTHONW
     if VENV_PYTHON.exists():
